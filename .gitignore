@@ -1,0 +1,11 @@
+.vscode
+__pycache__/
+*.pyc
+.idea/
+db.sqlite3
+.DS_Store
+.pytest_cache
+.coverage
+.coveragerc
+.env
+.tox
