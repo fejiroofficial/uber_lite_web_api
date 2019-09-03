@@ -42,8 +42,26 @@ class BaseViewTest(APITestCase):
             content_type='application/json'
         )
 
+    def activate_a_user(self, **kwargs):
+        return self.client.patch(
+            path='/api/v1/auth/register/activate',
+            data=json.dumps(kwargs),
+            content_type='application/json'
+        )
+
 
 class AuthRegisterUserTest(BaseViewTest):
+
+    def setUp(self):
+        self.a_user = CustomUser.objects.create(
+            first_name='fyoyo',
+            last_name='lyoyo',
+            email='yoyo@gmail.com',
+            telephone='+2348138776199',
+            password='12345678',
+            activation_code=5091,
+        )
+
     """
     Tests for auth/register/ endpoint
     """
@@ -64,3 +82,10 @@ class AuthRegisterUserTest(BaseViewTest):
         response = self.register_a_user()
         # assert status code
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_activate_user(self):
+        response = self.activate_a_user(
+            activation_code='5091'
+        )
+        self.assertEqual(response.data["message"],
+                         'This account has been successfully activated')
