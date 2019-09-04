@@ -4,7 +4,7 @@ from mock import patch
 from rest_framework.test import APITestCase, APIClient
 from rest_framework.views import status
 
-from .models import CustomUser
+from uber_lite.apps.authentication.models import CustomUser
 
 
 # test models
