@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import CustomUser
 
 
 class TokenSerializer(serializers.Serializer):
@@ -11,4 +11,14 @@ class TokenSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = CustomUser
+        fields = '__all__'
+
+    def create(self, validated_data):
+        return CustomUser.objects.create_user(**validated_data)
+
+
+class ActivateUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['is_active']
