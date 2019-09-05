@@ -49,6 +49,13 @@ class BaseViewTest(APITestCase):
             content_type='application/json'
         )
 
+    def login_a_user(self, **kwargs):
+        return self.client.post(
+            path='/api/v1/auth/login/',
+            data=json.dumps(kwargs),
+            content_type='application/json'
+        )
+
 
 class AuthRegisterUserTest(BaseViewTest):
 
@@ -68,11 +75,11 @@ class AuthRegisterUserTest(BaseViewTest):
     @patch('uber_lite.apps.authentication.views.send_sms')
     def test_register_a_user(self, mock):
         response = self.register_a_user(
-                    firstname="user_firstname",
-                    lastname="user_lastname",
-                    email="new_user@mail.com",
-                    telephone="+2348140506231",
-                    password="12345678")
+            firstname="user_firstname",
+            lastname="user_lastname",
+            email="new_user@mail.com",
+            telephone="+2348140506231",
+            password="12345678")
         self.assertEqual(response.data["message"],
                          'Thank you for choosing uberlite! '
                          'An activation code has been sent '
@@ -89,3 +96,34 @@ class AuthRegisterUserTest(BaseViewTest):
         )
         self.assertEqual(response.data["message"],
                          'This account has been successfully activated')
+
+
+class LoginUserTest(BaseViewTest):
+
+    def setUp(self):
+        self.user = CustomUser.objects.create(
+            first_name='firstyoyo',
+            last_name='lastyoyo',
+            email='yoyo33@gmail.com',
+            telephone='+2348138776100',
+            password='12345678',
+            activation_code=5093,
+        )
+        self.activator = self.activate_a_user(
+            activation_code='5093'
+        )
+        self.user = CustomUser.objects.filter(activation_code=5093).first()
+
+    """
+    Tests for auth/login/ endpoint
+    """
+    @patch('uber_lite.apps.authentication.views.authenticate')
+    def test_login_user(self, mock):
+        mock.return_value = self.user
+        response = self.login_a_user(
+            email='yoyo33@gmail.com',
+            password='12345678',
+        )
+        self.assertEqual(response.data["message"],
+                         'Login successfully')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
