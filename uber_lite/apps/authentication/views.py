@@ -1,6 +1,7 @@
 import random
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import authenticate, login
 
 from rest_framework_jwt.settings import api_settings
 from rest_framework import generics
@@ -104,4 +105,42 @@ class ActivateUser(generics.UpdateAPIView):
                 'token': token_serializer.data['token']
             },
             status=status.HTTP_200_OK
+        )
+
+
+class LoginUsers(generics.CreateAPIView):
+    """
+    POST auth/login
+    """
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email',
+                                 '').strip().replace(' ', '')
+        password = request.data.get('password',
+                                    '').strip().replace(' ', '')
+
+        u_user = CustomUser.objects.filter(email=email).first()
+        print('jndqd', u_user.is_active)
+        user = authenticate(request, username=email, password=password)
+        print('user :', user, email, password)
+        if user:
+            login(request, user)
+            serializer = TokenSerializer(data={
+                "token": jwt_encode_handler(
+                    jwt_payload_handler(user)
+                )})
+            serializer.is_valid()
+            return Response(
+                data={
+                    'message': 'Login successfully',
+                    'token': serializer.data['token']
+                },
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={
+                'message': 'Email/password combination incorrect'
+            },
+            status=status.HTTP_401_UNAUTHORIZED
         )
