@@ -1,17 +1,20 @@
 from rest_framework.response import Response
 from rest_framework.views import status
+
+from uber_lite.utils.request_helpers import ALLOWED_ROLES
 from .models import CustomUser
 
 
 def validate_signup(func):
     def wrapper(*args, **kwargs):
         errors = []
-        REQUIRED_FIELDS = ['firstname',
+        required_fields = ['firstname',
                            'lastname',
                            'email',
                            'telephone',
-                           'password']
-        for field in REQUIRED_FIELDS:
+                           'password',
+                           'user_role']
+        for field in required_fields:
             if field not in args[0].request.data:
                 errors.append(f'{field} is required but none provided')
 
@@ -22,6 +25,17 @@ def validate_signup(func):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        if args[0].request.data.get('user_role', '') not in ALLOWED_ROLES:
+            return Response(
+                data={
+                    'message': 'Provide a valid user role',
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        kwargs['is_driver'] = True if args[0].request.data.get(
+            'user_role', '') == 'driver' else False
 
         email = args[0].request.data.get('email', '')
         telephone = args[0].request.data.get('telephone', '')

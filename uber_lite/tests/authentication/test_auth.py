@@ -5,6 +5,7 @@ from rest_framework.test import APITestCase, APIClient
 from rest_framework.views import status
 
 from uber_lite.apps.authentication.models import CustomUser
+from uber_lite.utils.messages import authentication as auth_messages
 
 
 # test models
@@ -79,11 +80,11 @@ class AuthRegisterUserTest(BaseViewTest):
             lastname="user_lastname",
             email="new_user@mail.com",
             telephone="+2348140506231",
-            password="12345678")
+            password="12345678",
+            user_role="user")
         self.assertEqual(response.data["message"],
-                         'Thank you for choosing uberlite! '
-                         'An activation code has been sent '
-                         'to the telephone number you provided')
+                         auth_messages.SUCCESS['SIGN_UP'].format(
+                            'User'))
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         # test with invalid data
         response = self.register_a_user()
@@ -95,7 +96,7 @@ class AuthRegisterUserTest(BaseViewTest):
             activation_code='5091'
         )
         self.assertEqual(response.data["message"],
-                         'This account has been successfully activated')
+                         auth_messages.SUCCESS['ACCOUNT_ACTIVATION'])
 
 
 class LoginUserTest(BaseViewTest):
@@ -125,5 +126,5 @@ class LoginUserTest(BaseViewTest):
             password='12345678',
         )
         self.assertEqual(response.data["message"],
-                         'Login successfully')
+                         auth_messages.SUCCESS['LOGIN'])
         self.assertEqual(response.status_code, status.HTTP_200_OK)
