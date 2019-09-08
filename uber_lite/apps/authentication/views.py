@@ -9,6 +9,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import status
 
+from uber_lite.utils.messages import authentication as auth_messages
+from uber_lite.utils.request_helpers import get_request_param
 from .models import CustomUser
 from uber_lite.utils.auth_sms import send_sms
 from .validator import validate_signup
@@ -31,11 +33,12 @@ class RegisterUsers(generics.CreateAPIView):
 
     @validate_signup
     def post(self, request, *args, **kwargs):
-        firstname = request.data.get('firstname', '').strip()
-        lastname = request.data.get('lastname', '').strip()
-        email = request.data.get('email', '').strip()
-        telephone = request.data.get('telephone', '').strip()
-        password = request.data.get('password', '').strip()
+        firstname = get_request_param(request, 'firstname')
+        lastname = get_request_param(request, 'lastname')
+        email = get_request_param(request, 'email')
+        telephone = get_request_param(request, 'telephone')
+        password = get_request_param(request, 'password')
+        license_number = get_request_param(request, 'license_number')
 
         serializer = UserSerializer(data={
             'first_name': firstname,
@@ -43,24 +46,25 @@ class RegisterUsers(generics.CreateAPIView):
             'password': password,
             'email': email,
             'telephone': telephone,
+            'license_number': license_number,
+            'is_driver': kwargs.get('is_driver'),
             'activation_code': self.activation_code,
         })
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        user = serializer.save()
+        account_type = 'Driver' if user.is_driver else 'User'
 
-        message = f'<#> {serializer.data["activation_code"]}' \
-            ' is your Uberlite activation code.'
+        message = auth_messages.SUCCESS['ACTIVATION_SMS_TEXT'].format(
+            serializer.data["activation_code"], account_type)
+
         telephone_number = serializer.data['telephone']
-        send_sms(telephone_number, message)
+        # send_sms(telephone_number, message)
         return Response(
             data={
-                'message': 'Thank you for choosing uberlite!'
-                           ' An activation code'
-                           ' has been sent to the telephone'
-                           ' number you provided',
+                'message': auth_messages.SUCCESS['SIGN_UP'].format(
+                    account_type),
             },
-            status=status.HTTP_201_CREATED
-        )
+            status=status.HTTP_201_CREATED)
 
 
 class ActivateUser(generics.UpdateAPIView):
@@ -68,8 +72,8 @@ class ActivateUser(generics.UpdateAPIView):
     queryset = CustomUser.objects.all()
 
     def patch(self, request, *args, **kwargs):
-        activation_code = request.data.get('activation_code',
-                                           '').strip().replace(' ', '')
+        activation_code = get_request_param(
+            request, 'activation_code').replace(' ', '')
 
         user = None
 
@@ -94,14 +98,14 @@ class ActivateUser(generics.UpdateAPIView):
         serializer.save()
 
         token_serializer = TokenSerializer(data={
-                # using drf jwt utility functions to generate a token
-                "token": jwt_encode_handler(
-                    jwt_payload_handler(user)
-                )})
+            # using drf jwt utility functions to generate a token
+            "token": jwt_encode_handler(
+                jwt_payload_handler(user)
+            )})
         token_serializer.is_valid()
         return Response(
             data={
-                'message': 'This account has been successfully activated',
+                'message': auth_messages.SUCCESS['ACCOUNT_ACTIVATION'],
                 'token': token_serializer.data['token']
             },
             status=status.HTTP_200_OK
@@ -115,10 +119,8 @@ class LoginUsers(generics.CreateAPIView):
     permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email',
-                                 '').strip().replace(' ', '')
-        password = request.data.get('password',
-                                    '').strip().replace(' ', '')
+        email = get_request_param(request, 'email').replace(' ', '')
+        password = get_request_param(request, 'password').replace(' ', '')
 
         user = authenticate(request, username=email, password=password)
         if user:
@@ -130,7 +132,7 @@ class LoginUsers(generics.CreateAPIView):
             serializer.is_valid()
             return Response(
                 data={
-                    'message': 'Login successfully',
+                    'message': auth_messages.SUCCESS['LOGIN'],
                     'token': serializer.data['token']
                 },
                 status=status.HTTP_200_OK
