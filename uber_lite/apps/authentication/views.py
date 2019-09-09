@@ -58,7 +58,7 @@ class RegisterUsers(generics.CreateAPIView):
             serializer.data["activation_code"], account_type)
 
         telephone_number = serializer.data['telephone']
-        # send_sms(telephone_number, message)
+        send_sms(telephone_number, message)
         return Response(
             data={
                 'message': auth_messages.SUCCESS['SIGN_UP'].format(
