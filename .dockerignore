@@ -1,0 +1,4 @@
+uberlite_db/
+.vscode
+.env_sample
+uber_lite/tests/

@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  web:
+    restart: always
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - .:/uber_lite
+    entrypoint: ["sh", "docker-entrypoint.sh"]
+    
+  db:
+    restart: always
+    image: postgres:10
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=
+      - POSTGRES_DB=uberlite
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./uberlite_db:/var/lib/postgresql/data
