@@ -8,7 +8,7 @@ coverage==4.5.4
 Django==2.2.4
 django-phone-field==1.8.0
 django-sms==0.0.4
-djangorestframework==3.10.2
+djangorestframework==3.11.2
 djangorestframework-jwt==1.11.0
 djangorestframework-simplejwt==4.3.0
 docutils==0.15.2
